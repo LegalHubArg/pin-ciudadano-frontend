@@ -1,0 +1,3 @@
+window.REACT_APP_ENDPOINT = ""
+window.REACT_APP_CLAVE_CAPTCHA = ""  
+window.GENERATE_SOURCEMAP=false
