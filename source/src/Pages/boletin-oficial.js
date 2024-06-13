@@ -187,7 +187,7 @@ const BoletinOficialDefault = () => {
             <div>
               <button className="btn btn-link"
                 style={{ marginBottom: "6px" }} type="button" id="descargar-archivoPublicado"
-                onClick={() => traerDocumento(norma?.archivoPublicado)
+                onClick={() => traerDocumento(norma?.archivoBoletin)
                 }>
                 {norma.normaTipo}&nbsp;N°{norma.normaNumero}-{norma.organismoEmisor}/{norma.normaAnio}
               </button>
@@ -347,7 +347,7 @@ const BoletinOficialDefault = () => {
                         <div>
                           <button className="btn btn-primary btn-block"
                             style={{ marginBottom: "6px", height: "60px" }} type="button" id="descargar-separata"
-                            onClick={() => traerDocumento(n.archivo)
+                            onClick={() => traerDocumento(n.archivoS3)
                             }>
                             Descargar {n.nombre || "Anexo"}
                           </button>

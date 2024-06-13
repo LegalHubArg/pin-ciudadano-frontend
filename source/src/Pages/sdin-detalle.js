@@ -6,6 +6,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Spinner from '../Components/Spinner/Spinner'
 import moment from "moment";
 import { FaRegWindowRestore } from "react-icons/fa";
+import { FaDownload } from "react-icons/fa";
 import { ApiComunicator } from "../Helpers/ApiComunicator";
 //HTML decode
 import { decode } from 'html-entities';
@@ -17,6 +18,7 @@ const SDINResultados = () => {
   const navigate = useNavigate();
   const { idNorma } = useParams();
   const [norma, setNorma] = useState()
+  const [anexos, setAnexos] = useState([])
   const [texto, setTexto] = useState()
   const [textoActualizado, setTextoActualizado] = useState()
   const [pdf, setPdf] = useState()
@@ -42,6 +44,7 @@ const SDINResultados = () => {
       
         if(results.data && results.data.length > 0) {
           setNorma(results.data[0])
+          setAnexos(results.anexos)
           let requestS3 = {
             method: "POST",
             headers: { 'Content-Type': 'application/json' },
@@ -61,6 +64,21 @@ const SDINResultados = () => {
     catch (e) {
       setLoading(false)
     }
+  }
+
+  const handleDownloadArchivoTA = async (archivo) => {
+    let requestS3 = {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ archivoS3: archivo })
+    }
+    await ApiComunicator('/api/v1/sdin/traer-archivo-sdin', requestS3)
+            .then(res => res.json())
+            .then(res => {
+              let blob = b64toBlob(res.data, 'application/pdf')
+              let blobUrl = URL.createObjectURL(blob)
+              window.open(blobUrl)
+            })
   }
 
   const getArchivoAntecedentes = async (s3) => {
@@ -181,6 +199,25 @@ const SDINResultados = () => {
     }
   }
 
+  const handleDownloadArchivoAnexo = async (archivo) => {
+    try {
+      let requestS3 = {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archivoS3: archivo })
+      }
+      await ApiComunicator('/api/v1/sdin/traer-archivo-sdin', requestS3)
+              .then(res => res.json())
+              .then(res => {
+                let blob = b64toBlob(res.data, 'application/pdf')
+                let blobUrl = URL.createObjectURL(blob)
+                window.open(blobUrl)
+              })
+    } catch (error) {
+      
+    }
+  }
+
   useEffect(async () => {
     await getNorma()
     await traerRelaciones()
@@ -225,7 +262,7 @@ const SDINResultados = () => {
                   <p className="mb-3">
                     {norma?.vigente? 'Vigente' : 'No Vigente'}
                   </p>
-                  {norma?.vigente === 0 ?
+                  {(norma?.vigente === 0 && norma?.idCausal )?
                     <>
                       {norma?.esCausal === 1?
                       <>
@@ -432,11 +469,35 @@ const SDINResultados = () => {
                           <div id="collapseSeven" className="collapse" data-parent="#accordion" >
                             <div className="card-body">
                               <div style={{ height: "85%" }}>
-                                <a href={norma.archivoTextoActualizadoURL} target="_blank" className="btn btn-secondary btn-sm download-link">{norma.archivoTextoActualizado}</a>
+                                <button onClick={() => handleDownloadArchivoTA(norma.archivoTextoActualizadoS3)} className="btn btn-secondary btn-sm download-link"><i className="fa fa-download"></i>{norma.archivoTextoActualizado}</button>
                               </div>
+
+                              
+
                             </div>
                           </div>
                         </div>}
+
+                        {anexos && anexos.length > 0 && <>
+                          <div className="card">
+                            <button
+                              class="card-header collapsed card-link"
+                              data-toggle="collapse"
+                              data-target="#collapseThree">
+                              Anexos</button>
+                            <div id="collapseThree" class="collapse" data-parent="#accordion">
+                              <div class="card-body">
+                                <div style={{ height: "85%" }}>
+                                  {anexos && anexos.length > 0 &&
+                                    anexos.map(a => {
+                                      return <button className="btn btn-secondary btn-sm download-link" style={{margin:"5px"}} onClick={() => handleDownloadArchivoAnexo(a.ArchivoAnexoS3)}><FaDownload />{a.ArchivoAnexo}</button>
+                                    })}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </>}
+
                         {relaciones && relaciones.length > 0 ? <>
                           <div className="card">
                             <button

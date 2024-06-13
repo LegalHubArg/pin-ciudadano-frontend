@@ -24,6 +24,7 @@ const SDINBusqueda = () => {
   const [tematicas, setTematicas] = useState([])
   const [ramas, setRamas] = useState([])
   const [dependencias,setDependencias] = useState([])
+  const [relaciones,setRelaciones] = useState([])
   const [paginacion, setPaginacion] = useState({
     paginaActual: 1,
     limite: 15,
@@ -49,6 +50,7 @@ const SDINBusqueda = () => {
     alcance: '',
     idOrganismo: null,
     //idDependencia:null,
+    idRelacion:null,
     idGestion: null,
     estado: null,
     textoConsolidado: false,
@@ -115,6 +117,15 @@ const SDINBusqueda = () => {
           ['dependencias']: { dependencias: [...form.dependencias.dependencias, value] }
         })
         break;
+      case 'relacion':
+          value = parseInt(e.target.value)
+          if (isNaN(value)) {
+            setForm({...form,idRelacion:null})
+            break;
+          }
+          setForm({
+            ...form,idRelacion:value})
+          break;
       case 'normaNumero':
         value = parseInt(e.target.value);
         if (isNaN(value)) {
@@ -261,6 +272,11 @@ const SDINBusqueda = () => {
       .then(res=>res.json())
       setDependencias(dep.data)
   }
+  async function getRelaciones(){
+    const rel = await ApiComunicator('/api/v1/sdin/relaciones',{method:"GET"})
+      .then(res=>res.json())
+      setRelaciones(rel.data)
+  }
 
   async function getAlcances() {
     const alcances = await ApiComunicator('/api/v1/sdin/alcances', { method: "GET" })
@@ -284,6 +300,11 @@ const SDINBusqueda = () => {
     const gestiones = await ApiComunicator('/api/v1/sdin/gestion', { method: "GET" })
       .then(res => res.json())
     setGestiones(gestiones.data)
+  }
+
+  function limpiarForm(e){
+    e.preventDefault()
+    setForm(initForm)
   }
   
   const buscar = async (e) => {
@@ -329,6 +350,7 @@ const SDINBusqueda = () => {
     await getGestiones()
     await getRamas()
     await getTemas()
+    await getRelaciones()
     setLoading(false)
   }, [])
 
@@ -505,10 +527,10 @@ const SDINBusqueda = () => {
                           </div>
                         </div>
                         <div className="row">
-                          <div class="form-group col-12">
+                          <div class="form-group col-6">
                             <label class="form-label" for="gestion">Gestión</label>
                             <select class="custom-select" id="gestion" name="gestion"
-                              value={form.idGestion ? form.idGestion : null} onChange={(e) => handleForm(e)}>
+                              value={(form.idGestion != null) ? form.idGestion : null} onChange={(e) => handleForm(e)}>
                               <option selected value={null}></option>
                               {gestiones && (gestiones.length > 0) ? (
                                 gestiones.map((p, index) => (
@@ -516,6 +538,20 @@ const SDINBusqueda = () => {
                                 ))
 
                               ) : (<option selected disabled>No hay gestiones</option>)
+                              }
+                            </select>
+                          </div>
+                          <div class="form-group col-6">
+                            <label class="form-label" for="relacion">Relación</label>
+                            <select class="custom-select" id="relacion" name="relacion"
+                              value={(form.idRelacion != null) ? form.idRelacion : null} onChange={(e) => handleForm(e)}>
+                              <option selected value={null}></option>
+                              {relaciones && (relaciones.length > 0) ? (
+                                relaciones.map((p, index) => (
+                                  <option value={p.idRelacion} key={'opt-sec-' + index}>{decode(p.relacion)}</option>
+                                ))
+
+                              ) : (<option selected disabled>No hay relaciones</option>)
                               }
                             </select>
                           </div>
@@ -828,7 +864,7 @@ const SDINBusqueda = () => {
                       </div>
                     ) : (null)}
                     <button type="submit" class="btn btn-primary">Buscar</button>
-                    <button type="button" class="btn btn-secondary ml-2" onClick={() => setForm(initForm)}>Limpiar</button>
+                    <button type="button" class="btn btn-secondary ml-2" onClick={(e) => limpiarForm(e)}>Limpiar</button>
                   </form>
                 </div>
                 {loadingResultados ? <Spinner /> :
